@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Display a map on a webpage</title>
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <link
+      href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: sans-serif;
+      }
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+      .marker {
+        background-image: url("https://icons.iconarchive.com/icons/flat-icons.com/flat/512/Meteor-icon.png");
+        background-size: cover;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+      .marker.found {
+        background-image: url("https://static.vecteezy.com/system/resources/previews/014/316/320/non_2x/asteroid-meteor-icon-cartoon-style-vector.jpg");
+      }
+      .mapboxgl-popup {
+        max-width: 200px;
+      }
+      .map-overlay {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background-color: white;
+        padding: 10px;
+        border-radius: 5px;
+        z-index: 1;
+      }
+      .map-overlay-container {
+        display: flex;
+        gap: 8px;
+      }
+      .map-overlay p {
+        margin: 0;
+        margin-bottom: 8px;
+      }
+      .map-overlay select {
+        width: 180px;
+        padding: 8px;
+      }
+      button {
+        width: 100%;
+        padding: 8px;
+        font-size: 16px;
+        background-color: #007bff;
+        border: 1px solid #007bff;
+        color: white;
+      }
+      .number-count {
+        padding: 8px 0;
+      }
+      p:nth-last-child(1) {
+        color: cornflowerblue;
+        padding: 8px;
+        text-align: center;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="map-overlay">
+      <div class="map-overlay-container">
+        <div>
+          <p>Select a country:</p>
+          <select id="meteorite-country" onchange="updateCountry(this)">
+            <option value="DE" selected>Germany</option>
+          </select>
+        </div>
+        <div>
+          <p>Select a landing:</p>
+          <select id="meteorite-landing" onchange="updateLanding(this)">
+            <option value="Fell" selected>Fell</option>
+            <option value="Found">Found</option>
+          </select>
+        </div>
+      </div>
+      <p class="number-count">Number of places: <span id="count"></span></p>
+      <button onclick="run()">Update Data</button>
+      <p>
+        <a href="analyse.html" target="_blank">See data visualized</a>
+      </p>
+    </div>
+    <div id="map"></div>
+    <script>
+      const data = [];
+      let selectedCountry = "US";
+      let selectedLanding = "Fell";
+
+      fetch("./meteorite-landings.json")
+        .then((response) => response.json())
+        .then((d) => {
+          data.push(...d);
+          const countryMap = {};
+          data.forEach((d) => {
+            if (d.reclat === "" || d.reclong === "") return;
+            if (!countryMap[d.country]) {
+              countryMap[d.country] = [d.country_code];
+            }
+          });
+          html = "";
+          Object.keys(countryMap)
+            .sort()
+            .forEach((k) => {
+              html += `<option value="${countryMap[k]}" ${
+                countryMap[k][0] === "US" ? "selected" : ""
+              }>${k}</option>`;
+            });
+
+          document.getElementById("meteorite-country").innerHTML = html;
+        });
+
+      const run = () => {
+        const filteredData = data.filter(
+          (d) =>
+            d.country_code === selectedCountry && d.fall === selectedLanding
+        );
+
+        document.getElementById("count").innerText = filteredData.length;
+
+        mapboxgl.accessToken =
+          "pk.eyJ1Ijoia2VpZGFraXJhIiwiYSI6ImNsdzVtdXJldjFtNTgybXBmdzFzemY0cGwifQ.MxihCu7NEeHVP84DV_r9ZQ";
+        const map = new mapboxgl.Map({
+          container: "map",
+          center: [filteredData[0].reclong, filteredData[0].reclat],
+          zoom: 4,
+        });
+
+        filteredData.forEach((d, i) => {
+          const coords = [d.reclong, d.reclat];
+          const popup = new mapboxgl.Popup({ offset: 25 }).setText(
+            "Meteor Landed at " + d.name + " at " + d.year
+          );
+
+          // create DOM element for the marker
+          const el = document.createElement("div");
+          el.id = "marker" + i;
+          el.className = `marker ${d.fall === "Found" ? "found" : ""}`;
+
+          // create the marker
+          new mapboxgl.Marker(el).setLngLat(coords).setPopup(popup).addTo(map);
+        });
+      };
+
+      setTimeout(() => {
+        run();
+      }, 1000);
+
+      function updateLanding(x) {
+        selectedLanding = x.value;
+      }
+
+      function updateCountry(x) {
+        selectedCountry = x.value;
+      }
+    </script>
+  </body>
+</html>
