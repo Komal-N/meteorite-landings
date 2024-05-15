@@ -1,92 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Data Visualization</title>
-  </head>
-  <body>
-    <div>
-      <center>
-        <select id="y-label" onchange="changeKey(this)">
-          <option value="year">Year</option>
-          <option value="country">Country</option>
-        </select>
-      </center>
-      <canvas id="myChart"></canvas>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Visualization</title>
+</head>
 
-    <script>
-      const ctx = document.getElementById("myChart");
-      const meteorData = [];
-      let chart;
+<body>
+  <div>
+    <center>
+      Choose data for visualization:
+      <select id="y-label" onchange="changeKey(this)">
+        <option value="year">Year</option>
+        <option value="country">Country</option>
+        <option value="recclass">Rec Class</option>
+      </select>
+    </center>
+    <canvas id="myChart"></canvas>
+  </div>
 
-      fetch("./meteorite-landings.json")
-        .then((response) => response.json())
-        .then((data) => meteorData.push(...data));
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-      const run = () => {
-        const key = document.getElementById("y-label").value;
-        meteorMap = {};
-        meteorData.forEach((meteor) => {
-          if (meteor.reclat === "" || meteor.reclong === "") return;
-          if (meteorMap[meteor[key]]) {
-            meteorMap[meteor[key]].push(meteor);
-          } else {
-            meteorMap[meteor[key]] = [meteor];
-          }
-        });
+  <script>
+    const ctx = document.getElementById("myChart");
+    const meteorData = [];
+    let chart;
 
-        itemsList = [...new Set(Object.keys(meteorMap))];
-        const datasetData = itemsList.map((k) => meteorMap[k].length);
+    fetch("./meteorite-landings.json")
+      .then((response) => response.json())
+      .then((data) => meteorData.push(...data));
 
-        chart = new Chart(ctx, {
-          type: "bar",
-          data: {
-            labels: itemsList,
-            datasets: [
-              {
-                label: "# Meteor Landings",
-                data: datasetData,
-                borderWidth: 1,
-              },
-            ],
-          },
-          options: {
-            scales: {
-              y: {
-                beginAtZero: true,
-              },
+    const run = () => {
+      const key = document.getElementById("y-label").value;
+      meteorMap = {};
+      meteorData.forEach((meteor) => {
+        if (meteor.reclat === "" || meteor.reclong === "") return;
+        if (meteorMap[meteor[key]]) {
+          meteorMap[meteor[key]].push(meteor);
+        } else {
+          meteorMap[meteor[key]] = [meteor];
+        }
+      });
+
+      itemsList = [...new Set(Object.keys(meteorMap))];
+      const datasetData = itemsList.map((k) => meteorMap[k].length);
+
+      chart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: itemsList,
+          datasets: [
+            {
+              label: "# Meteor Landings",
+              data: datasetData,
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
             },
           },
-        });
-      };
+        },
+      });
+    };
 
-      function changeKey(e) {
-        const key = document.getElementById("y-label").value;
-        meteorMap = {};
-        meteorData.forEach((meteor) => {
-          if (meteor.reclat === "" || meteor.reclong === "") return;
-          if (meteorMap[meteor[key]]) {
-            meteorMap[meteor[key]].push(meteor);
-          } else {
-            meteorMap[meteor[key]] = [meteor];
-          }
-        });
+    function changeKey(e) {
+      const key = document.getElementById("y-label").value;
+      meteorMap = {};
+      meteorData.forEach((meteor) => {
+        if (meteor.reclat === "" || meteor.reclong === "") return;
+        if (meteorMap[meteor[key]]) {
+          meteorMap[meteor[key]].push(meteor);
+        } else {
+          meteorMap[meteor[key]] = [meteor];
+        }
+      });
 
-        itemsList = [...new Set(Object.keys(meteorMap))];
-        const datasetData = itemsList.map((k) => meteorMap[k].length);
+      itemsList = [...new Set(Object.keys(meteorMap))];
+      const datasetData = itemsList.map((k) => meteorMap[k].length);
 
-        chart.data.labels = itemsList;
-        chart.data.datasets[0].data = datasetData;
-        chart.update();
-      }
+      chart.data.labels = itemsList;
+      chart.data.datasets[0].data = datasetData;
+      chart.update();
+    }
 
-      setTimeout(() => {
-        run();
-      }, 1000);
-    </script>
-  </body>
+    setTimeout(() => {
+      run();
+    }, 1000);
+  </script>
+</body>
+
 </html>
